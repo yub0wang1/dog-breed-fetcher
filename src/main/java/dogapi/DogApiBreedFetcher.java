@@ -25,11 +25,53 @@ public class DogApiBreedFetcher implements BreedFetcher {
      */
     @Override
     public List<String> getSubBreeds(String breed) {
-        // TODO Task 1: Complete this method based on its provided documentation
-        //      and the documentation for the dog.ceo API. You may find it helpful
-        //      to refer to the examples of using OkHttpClient from the last lab,
-        //      as well as the code for parsing JSON responses.
-        // return statement included so that the starter code can compile and run.
+        if (breed == null || breed.trim().isEmpty()) {
+            throw new BreedNotFoundException("Breed is null or empty");
+        }
+        String normalizedBreed = breed.trim().toLowerCase(Locale.ROOT);
+        String url = "https://dog.ceo/api/breed/" + normalizedBreed + "/list";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        List<String> result = null;
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new BreedNotFoundException("Breed is null or empty");
+            }
+
+            String body = response.body().string();
+            JSONObject json = new JSONObject(body);
+
+            String status = json.optString("status", "");
+            if (!"success".equalsIgnoreCase(status)) {
+                String apiMsg = json.optString("message", "Unknown API error");
+                throw new BreedNotFoundException("API error: " + apiMsg);
+            }
+
+            JSONArray message = json.optJSONArray("message");
+            if (message == null) {
+                throw new BreedNotFoundException("API null for" + breed);
+            }
+
+            List<String> subBreeds = new ArrayList<>(message.length());
+            for (int i = 0; i < message.length(); i++) {
+                subBreeds.add(message.getString(i));
+            }
+            result = subBreeds;
+        }
+        catch (IOException e) {
+             throw new BreedNotFoundException("Could not fetch subbreed list");
+        }
+        catch (Exception e) {
+            throw new BreedNotFoundException("Error processing API response for: " + breed);
+        }
+        if (result != null) {
+            return result;
+        }
         return new ArrayList<>();
     }
 }
