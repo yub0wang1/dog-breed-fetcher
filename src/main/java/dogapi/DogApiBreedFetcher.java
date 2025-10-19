@@ -19,6 +19,7 @@ public class DogApiBreedFetcher implements BreedFetcher {
 
     /**
      * Fetch the list of sub breeds for the given breed from the dog.ceo API.
+     *
      * @param breed the breed to fetch sub breeds for
      * @return list of sub breeds for the given breed
      * @throws BreedNotFoundException if the breed does not exist (or if the API call fails for any reason)
@@ -28,8 +29,8 @@ public class DogApiBreedFetcher implements BreedFetcher {
         if (breed == null || breed.trim().isEmpty()) {
             throw new BreedNotFoundException(breed);
         }
-        String normalizedBreed = breed.trim().toLowerCase(Locale.ROOT);
-        String url = "https://dog.ceo/api/breed/" + normalizedBreed + "/list";
+        String normalized = breed.trim().toLowerCase(Locale.ROOT);
+        String url = "https://dog.ceo/api/breed/" + normalized + "/list";
 
         Request request = new Request.Builder()
                 .url(url)
@@ -46,30 +47,21 @@ public class DogApiBreedFetcher implements BreedFetcher {
             String body = response.body().string();
             JSONObject json = new JSONObject(body);
 
-            String status = json.optString("status", "");
-            if (!"success".equalsIgnoreCase(status)) {
+            if (!"success".equalsIgnoreCase(json.optString("status", ""))) {
                 String apiMsg = json.optString("message", "Unknown API error");
                 throw new BreedNotFoundException(breed);
             }
 
             JSONArray message = json.optJSONArray("message");
-            if (message == null) {
-                throw new BreedNotFoundException(breed);
-            }
+            if (message == null) throw new BreedNotFoundException(breed);
 
-            List<String> subBreeds = new ArrayList<>(message.length());
-            for (int i = 0; i < message.length(); i++) {
-                subBreeds.add(message.getString(i));
+            List<String> out = new ArrayList<>(message.length());
+            for (int i = 0; i < message.length(); i++) out.add(message.optString(i));
+            {
+                return out;
             }
-            result = subBreeds;
+        } catch (IOException e) {
+            throw new BreedNotFoundException(breed);
         }
-        catch (IOException e) {
-             throw new BreedNotFoundException(breed);
-        }
-
-        if (result != null) {
-            return result;
-        }
-        return new ArrayList<>();
     }
 }
