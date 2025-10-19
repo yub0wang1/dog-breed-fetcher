@@ -40,7 +40,7 @@ public class DogApiBreedFetcher implements BreedFetcher {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
-                throw new BreedNotFoundException("Breed is null or empty");
+                throw new BreedNotFoundException(breed);
             }
 
             String body = response.body().string();
