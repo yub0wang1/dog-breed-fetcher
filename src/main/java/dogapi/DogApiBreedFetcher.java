@@ -24,9 +24,9 @@ public class DogApiBreedFetcher implements BreedFetcher {
      * @throws BreedNotFoundException if the breed does not exist (or if the API call fails for any reason)
      */
     @Override
-    public List<String> getSubBreeds(String breed) {
+    public List<String> getSubBreeds(String breed) throws BreedNotFoundException {
         if (breed == null || breed.trim().isEmpty()) {
-            throw new BreedNotFoundException("Breed is null or empty");
+            throw new BreedNotFoundException(breed);
         }
         String normalizedBreed = breed.trim().toLowerCase(Locale.ROOT);
         String url = "https://dog.ceo/api/breed/" + normalizedBreed + "/list";
@@ -49,12 +49,12 @@ public class DogApiBreedFetcher implements BreedFetcher {
             String status = json.optString("status", "");
             if (!"success".equalsIgnoreCase(status)) {
                 String apiMsg = json.optString("message", "Unknown API error");
-                throw new BreedNotFoundException("API error: " + apiMsg);
+                throw new BreedNotFoundException(breed);
             }
 
             JSONArray message = json.optJSONArray("message");
             if (message == null) {
-                throw new BreedNotFoundException("API null for" + breed);
+                throw new BreedNotFoundException(breed);
             }
 
             List<String> subBreeds = new ArrayList<>(message.length());
@@ -64,11 +64,9 @@ public class DogApiBreedFetcher implements BreedFetcher {
             result = subBreeds;
         }
         catch (IOException e) {
-             throw new BreedNotFoundException("Could not fetch subbreed list");
+             throw new BreedNotFoundException(breed);
         }
-        catch (Exception e) {
-            throw new BreedNotFoundException("Error processing API response for: " + breed);
-        }
+
         if (result != null) {
             return result;
         }
