@@ -25,9 +25,9 @@ public class CachingBreedFetcher implements BreedFetcher {
     }
 
     @Override
-    public List<String> getSubBreeds(String breed) {
+    public List<String> getSubBreeds(String breed) throws BreedNotFoundException{
         if (breed == null || breed.trim().isEmpty()) {
-            throw new BreedNotFoundException("Breed is null or empty");
+            throw new BreedNotFoundException(breed);
         }
 
         String key = breed.trim().toLowerCase(Locale.ROOT);
